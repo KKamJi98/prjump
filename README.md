@@ -1,23 +1,26 @@
-# pull-request-jump (prj)
+# prjump
 
 Open GitHub/Bitbucket Cloud pull request pages from the CLI.
 
 ## Install
 
 ```bash
-uv tool install .
-```
+# PyPI
+uv tool install prjump
 
-Editable install for local development:
+# Straight from the repository
+uv tool install git+https://github.com/KKamJi98/prjump
 
-```bash
+# Local development
 uv tool install --editable .
 ```
+
+The package is `prjump`; the command is `prj`.
 
 Uninstall:
 
 ```bash
-uv tool uninstall pull-request-jump
+uv tool uninstall prjump
 ```
 
 ## Usage

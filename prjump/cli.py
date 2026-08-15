@@ -10,7 +10,7 @@ import webbrowser
 from dataclasses import dataclass
 from urllib.parse import quote, urlparse
 
-from pull_request_jump import __version__
+from prjump import __version__
 
 
 class PrOpenError(Exception):
@@ -202,7 +202,7 @@ def cmd_open(args: argparse.Namespace) -> int:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="pr",
+        prog="prj",
         description="Open GitHub/Bitbucket Cloud pull request pages.",
     )
     parser.add_argument(

@@ -1,4 +1,4 @@
-"""pull_request_jump.cli 단위 테스트."""
+"""prjump.cli 단위 테스트."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pull_request_jump.cli import (
+from prjump.cli import (
     PrOpenError,
     RemoteInfo,
     get_default_branch,
@@ -89,7 +89,7 @@ def test_parse_remote_url_bitbucket_ssh():
 
 def test_get_default_branch_via_symbolic_ref():
     """symbolic-ref 조회 성공 시 브랜치 이름을 반환해야 한다."""
-    with patch("pull_request_jump.cli.run_git") as mock_run:
+    with patch("prjump.cli.run_git") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="refs/remotes/origin/HEAD\n",
@@ -101,7 +101,7 @@ def test_get_default_branch_via_symbolic_ref():
 
 def test_get_default_branch_symbolic_ref_returns_main():
     """symbolic-ref가 refs/remotes/origin/main을 반환하면 'main'이 추출돼야 한다."""
-    with patch("pull_request_jump.cli.run_git") as mock_run:
+    with patch("prjump.cli.run_git") as mock_run:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="refs/remotes/origin/main\n",
@@ -124,7 +124,7 @@ def test_get_default_branch_fallback_to_remote_show():
             )
         return MagicMock(returncode=1, stdout="")
 
-    with patch("pull_request_jump.cli.run_git", side_effect=side_effect):
+    with patch("prjump.cli.run_git", side_effect=side_effect):
         branch = get_default_branch("origin")
 
     assert branch == "develop"
@@ -145,7 +145,7 @@ def test_get_default_branch_fallback_to_known_branches():
             return MagicMock(returncode=0, stdout="")
         return MagicMock(returncode=1, stdout="")
 
-    with patch("pull_request_jump.cli.run_git", side_effect=side_effect):
+    with patch("prjump.cli.run_git", side_effect=side_effect):
         branch = get_default_branch("origin")
 
     assert branch == "main"
@@ -157,7 +157,7 @@ def test_get_default_branch_raises_when_all_fallbacks_fail():
     def side_effect(args):
         return MagicMock(returncode=128, stdout="", stderr="error")
 
-    with patch("pull_request_jump.cli.run_git", side_effect=side_effect):
+    with patch("prjump.cli.run_git", side_effect=side_effect):
         with pytest.raises(PrOpenError, match="Unable to determine default branch"):
             get_default_branch("origin")
 
