@@ -1,6 +1,13 @@
 # prjump
 
-Open GitHub/Bitbucket Cloud pull request pages from the CLI.
+[![PyPI](https://img.shields.io/pypi/v/prjump)](https://pypi.org/project/prjump/)
+[![CI](https://github.com/KKamJi98/prjump/actions/workflows/ci.yml/badge.svg)](https://github.com/KKamJi98/prjump/actions/workflows/ci.yml)
+
+Open the pull request page for the branch you are on, without leaving the shell.
+
+`prj open` reads the remote, works out whether it is GitHub or Bitbucket Cloud,
+and opens the compare page with the right source and target already filled in.
+No copying branch names into a URL.
 
 ## Install
 
