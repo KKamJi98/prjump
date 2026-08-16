@@ -1,6 +1,6 @@
 [project]
 name = "prjump"
-version = "0.2.1"
+version = "0.2.2"
 description = "Open GitHub/Bitbucket Cloud pull request pages from the CLI"
 readme = "README.md"
 license = { text = "MIT" }
