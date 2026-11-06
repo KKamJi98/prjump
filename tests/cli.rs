@@ -41,6 +41,9 @@ fn prj(cwd: &Path) -> Command {
         .env("GIT_CONFIG_NOSYSTEM", "1")
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GIT_SSH_COMMAND", "false")
+        // Keep the developer's own ~/.config/prjump out of the tests.
+        .env_remove("PRJ_CONFIG")
+        .env("XDG_CONFIG_HOME", std::env::temp_dir().join("prj-tests-no-config"))
         .env_remove("SSH_CONNECTION")
         .env_remove("SSH_CLIENT")
         .env_remove("SSH_TTY");
@@ -267,4 +270,45 @@ fn unpushed_commits_are_reported_but_do_not_fail() {
         .success()
         .stdout("https://github.com/o/r/compare/main...feat?quick_pull=1\n")
         .stderr("warning: 1 local commit on 'feat' not pushed to 'origin' yet\n");
+}
+
+#[test]
+fn config_alias_points_an_ssh_host_alias_at_github() {
+    let repo = repo_with_origin("git@github-work:o/r.git");
+    let cfg = repo.path().join("prj.toml");
+    std::fs::write(&cfg, "[hosts.\"github-work\"]\nweb_host = \"github.com\"\n").unwrap();
+    prj(repo.path())
+        .env("PRJ_CONFIG", &cfg)
+        .args(["open", "--print", "-t", "main", "-s", "x"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...x?quick_pull=1\n");
+}
+
+#[test]
+fn config_errors_name_the_file_and_key() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let cfg = repo.path().join("prj.toml");
+    std::fs::write(&cfg, "[hosts.x]\nprovider = \"gitlab\"\n").unwrap();
+    prj(repo.path())
+        .env("PRJ_CONFIG", &cfg)
+        .args(["open", "--print", "-t", "main", "-s", "x"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains(
+            "prj.toml: hosts.\"x\".provider must be one of",
+        ));
+}
+
+#[test]
+fn missing_default_config_is_ignored() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let home = tempfile::tempdir().unwrap();
+    prj(repo.path())
+        .env_remove("PRJ_CONFIG")
+        .env_remove("XDG_CONFIG_HOME")
+        .env("HOME", home.path())
+        .args(["open", "--print", "-t", "main", "-s", "x"])
+        .assert()
+        .success();
 }

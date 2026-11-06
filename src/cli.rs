@@ -5,6 +5,7 @@ use std::process::ExitCode;
 use clap::{ArgAction, Args, CommandFactory, Parser, Subcommand};
 
 use crate::browser;
+use crate::config::Config;
 use crate::error::Error;
 use crate::git::{Git, SystemGit, get_current_branch, get_default_branch, get_remote_url};
 use crate::head::resolve_head;
@@ -120,9 +121,12 @@ fn non_empty(value: &Option<String>) -> Option<&str> {
 }
 
 pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
+    let config = Config::load()?;
     let remote_url = get_remote_url(git, &args.remote)?;
-    let remote = parse_remote_url(&remote_url)?;
-    let provider = resolve_provider(&remote, args.provider.as_deref())?;
+    let mut remote = parse_remote_url(&remote_url)?;
+    let config_provider = config.apply(&mut remote);
+    let provider_choice = args.provider.as_deref().or(config_provider.as_deref());
+    let provider = resolve_provider(&remote, provider_choice)?;
 
     let mut warnings = Vec::new();
     let mut head_owner = None;
@@ -133,7 +137,7 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
             let head = resolve_head(git, &local, &args.remote)?;
             warnings.extend(head.warnings);
             let fork_remote = head.remote.as_deref().filter(|r| *r != args.remote);
-            if let Some(owner) = fork_remote.and_then(|r| fork_owner(git, r, &remote)) {
+            if let Some(owner) = fork_remote.and_then(|r| fork_owner(git, &config, r, &remote)) {
                 match provider {
                     Provider::GitHub => head_owner = Some(owner),
                     Provider::Bitbucket => warnings.push(format!(
@@ -173,9 +177,15 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
 
 /// The owner of `head_remote` when it is another fork of the same repository
 /// host as the target. Any problem reading it just means "not a fork".
-fn fork_owner(git: &dyn Git, head_remote: &str, target: &RemoteInfo) -> Option<String> {
+fn fork_owner(
+    git: &dyn Git,
+    config: &Config,
+    head_remote: &str,
+    target: &RemoteInfo,
+) -> Option<String> {
     let url = get_remote_url(git, head_remote).ok()?;
-    let head = parse_remote_url(&url).ok()?;
+    let mut head = parse_remote_url(&url).ok()?;
+    config.apply(&mut head);
     let same_host = head.authority().eq_ignore_ascii_case(&target.authority());
     (same_host && !head.owner.eq_ignore_ascii_case(&target.owner)).then_some(head.owner)
 }
