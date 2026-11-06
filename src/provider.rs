@@ -37,7 +37,10 @@ impl Provider {
         let base = base.filter(|b| !b.is_empty());
         let prefix = format!(
             "{}://{}/{}/{}",
-            remote.scheme, remote.host, remote.owner, remote.repo
+            remote.scheme,
+            remote.authority(),
+            remote.owner,
+            remote.repo
         );
         match self {
             Provider::GitHub => {
@@ -155,6 +158,45 @@ mod tests {
                 .build_pr_url(&r, Some("main"), "f")
                 .unwrap(),
             "https://bitbucket.org/o/r/pull-requests/new?source=f&dest=main&t=1"
+        );
+    }
+
+    #[test]
+    fn web_port_is_kept_for_http_remotes() {
+        let r = crate::remote::parse_remote_url("https://github.com:8443/o/r.git").unwrap();
+        assert_eq!(
+            Provider::GitHub
+                .build_pr_url(&r, Some("main"), "x")
+                .unwrap(),
+            "https://github.com:8443/o/r/compare/main...x"
+        );
+    }
+
+    #[test]
+    fn ssh_port_and_default_web_port_are_dropped() {
+        for url in [
+            "ssh://git@github.com:2222/o/r.git",
+            "https://github.com:443/o/r.git",
+        ] {
+            let r = crate::remote::parse_remote_url(url).unwrap();
+            assert_eq!(
+                Provider::GitHub
+                    .build_pr_url(&r, Some("main"), "x")
+                    .unwrap(),
+                "https://github.com/o/r/compare/main...x",
+                "{url}"
+            );
+        }
+    }
+
+    #[test]
+    fn ipv6_hosts_get_brackets_back() {
+        let r = crate::remote::parse_remote_url("https://[::1]:3000/o/r").unwrap();
+        assert_eq!(
+            Provider::GitHub
+                .build_pr_url(&r, Some("main"), "x")
+                .unwrap(),
+            "https://[::1]:3000/o/r/compare/main...x"
         );
     }
 }

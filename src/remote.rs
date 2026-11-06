@@ -17,6 +17,9 @@ pub struct RemoteInfo {
     pub owner: String,
     pub repo: String,
     pub scheme: String,
+    /// Web port from an `http(s)://host:port/...` remote. SSH ports and the
+    /// scheme's default port are not kept.
+    pub port: Option<String>,
 }
 
 impl RemoteInfo {
@@ -26,6 +29,20 @@ impl RemoteInfo {
             owner: owner.to_string(),
             repo: repo.to_string(),
             scheme: "https".to_string(),
+            port: None,
+        }
+    }
+
+    /// `host[:port]` for the web URL, with brackets around IPv6 hosts.
+    pub fn authority(&self) -> String {
+        let host = if self.host.contains(':') {
+            format!("[{}]", self.host)
+        } else {
+            self.host.clone()
+        };
+        match &self.port {
+            Some(port) => format!("{host}:{port}"),
+            None => host,
         }
     }
 }
@@ -33,11 +50,17 @@ impl RemoteInfo {
 pub fn parse_remote_url(url: &str) -> Result<RemoteInfo, Error> {
     let url = pystr::strip(url);
     let mut scheme = "https".to_string();
+    let mut port = None;
 
     let (host, path) = if url.contains("://") {
         let parsed = urlparse(url)?;
         if parsed.scheme == "http" || parsed.scheme == "https" {
             scheme = parsed.scheme.clone();
+            let default = if scheme == "http" { "80" } else { "443" };
+            port = parsed
+                .port()
+                .filter(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()) && *p != default)
+                .map(str::to_string);
         }
         (parsed.hostname().unwrap_or_default(), parsed.path)
     } else {
@@ -71,6 +94,7 @@ pub fn parse_remote_url(url: &str) -> Result<RemoteInfo, Error> {
         owner: owner.join("/"),
         repo: (*repo).to_string(),
         scheme,
+        port,
     })
 }
 
@@ -82,6 +106,19 @@ struct ParsedUrl {
 }
 
 impl ParsedUrl {
+    /// The port part of the netloc, as Python `_hostinfo` splits it.
+    fn port(&self) -> Option<&str> {
+        let hostinfo = rpartition_after(&self.netloc, '@');
+        let port = match hostinfo.split_once('[') {
+            Some((_, bracketed)) => bracketed
+                .split_once(']')
+                .and_then(|(_, rest)| rest.split_once(':'))
+                .map(|(_, p)| p),
+            None => hostinfo.split_once(':').map(|(_, p)| p),
+        };
+        port.filter(|p| !p.is_empty())
+    }
+
     /// Python `ParseResult.hostname`: lowercased host without brackets or
     /// port. A scoped IPv6 zone keeps its case.
     fn hostname(&self) -> Option<String> {
