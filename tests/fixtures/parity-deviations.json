@@ -1,5 +1,10 @@
 {
   "comment": "Intentional differences from prjump 0.2.2. Every entry needs a reason. See scripts/parity/README.md.",
   "rules": [],
-  "cases": {}
+  "cases": {
+    "default/symbolic-ref-slash": {
+      "reason": "Phase 3 bug 1: a default branch with a slash (release/2026) was cut to its last segment.",
+      "stdout": "https://github.com/o/r/compare/release%2F2026...x\n"
+    }
+  }
 }
