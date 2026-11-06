@@ -371,3 +371,19 @@ fn copy_never_breaks_print() {
         .success()
         .stdout("https://github.com/o/r/compare/main...x?quick_pull=1\n");
 }
+
+#[test]
+fn completions_cover_the_open_flags() {
+    let dir = tempfile::tempdir().unwrap();
+    for shell in ["bash", "zsh", "fish", "powershell", "elvish"] {
+        prj(dir.path())
+            .args(["completions", shell])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("target").and(predicate::str::contains("source")));
+    }
+    prj(dir.path())
+        .args(["completions", "tcsh"])
+        .assert()
+        .code(2);
+}
