@@ -4,6 +4,7 @@
 
 pub mod browser;
 pub mod cli;
+pub mod clipboard;
 pub mod config;
 pub mod error;
 pub mod git;
