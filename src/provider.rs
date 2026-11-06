@@ -34,6 +34,19 @@ impl Provider {
         base: Option<&str>,
         head: &str,
     ) -> Result<String, Error> {
+        self.build_pr_url_from(remote, base, head, None)
+    }
+
+    /// Like `build_pr_url`, with the head branch in another owner's fork.
+    /// GitHub takes an owner-qualified head (`owner:branch`); Bitbucket's
+    /// URL has no such field, so the owner is not used there.
+    pub fn build_pr_url_from(
+        self,
+        remote: &RemoteInfo,
+        base: Option<&str>,
+        head: &str,
+        head_owner: Option<&str>,
+    ) -> Result<String, Error> {
         let base = base.filter(|b| !b.is_empty());
         let prefix = format!(
             "{}://{}/{}/{}",
@@ -49,10 +62,13 @@ impl Provider {
                         "GitHub requires a target branch. Use --target to specify one.",
                     ));
                 };
+                let head = match head_owner {
+                    Some(owner) => format!("{}:{}", quote(owner), quote(head)),
+                    None => quote(head),
+                };
                 Ok(format!(
-                    "{prefix}/compare/{}...{}?quick_pull=1",
-                    quote(base),
-                    quote(head)
+                    "{prefix}/compare/{}...{head}?quick_pull=1",
+                    quote(base)
                 ))
             }
             Provider::Bitbucket => {
@@ -222,6 +238,17 @@ mod tests {
                 .build_pr_url(&r, Some("main"), "x")
                 .unwrap(),
             "https://[::1]:3000/o/r/compare/main...x?quick_pull=1"
+        );
+    }
+
+    #[test]
+    fn github_fork_head_is_owner_qualified() {
+        let r = RemoteInfo::new("github.com", "up", "r");
+        assert_eq!(
+            Provider::GitHub
+                .build_pr_url_from(&r, Some("main"), "feat/x", Some("me"))
+                .unwrap(),
+            "https://github.com/up/r/compare/main...me:feat%2Fx?quick_pull=1"
         );
     }
 }

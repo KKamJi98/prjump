@@ -213,3 +213,58 @@ fn hanging_remote_lookup_times_out() {
         started.elapsed()
     );
 }
+
+/// origin is my fork, upstream the original. A branch pushed to the fork
+/// opens a cross-fork PR against upstream.
+#[test]
+fn fork_branch_gets_an_owner_qualified_head() {
+    let repo = repo_with_origin("git@github.com:me/r.git");
+    let dir = repo.path();
+    git_in(
+        dir,
+        &["remote", "add", "upstream", "git@github.com:up/r.git"],
+    );
+    git_in(dir, &["switch", "-q", "-c", "feat/x"]);
+    git_in(dir, &["update-ref", "refs/remotes/origin/feat/x", "HEAD"]);
+    git_in(dir, &["config", "branch.feat/x.remote", "origin"]);
+    git_in(dir, &["config", "branch.feat/x.merge", "refs/heads/feat/x"]);
+    prj(dir)
+        .args(["open", "--print", "--remote", "upstream", "-t", "main"])
+        .assert()
+        .success()
+        .stdout("https://github.com/up/r/compare/main...me:feat%2Fx?quick_pull=1\n")
+        .stderr("");
+}
+
+#[test]
+fn same_repository_branch_has_no_owner_and_no_warning() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let dir = repo.path();
+    git_in(dir, &["switch", "-q", "-c", "feat"]);
+    git_in(dir, &["update-ref", "refs/remotes/origin/feat", "HEAD"]);
+    git_in(dir, &["config", "branch.feat.remote", "origin"]);
+    git_in(dir, &["config", "branch.feat.merge", "refs/heads/feat"]);
+    prj(dir)
+        .args(["open", "--print", "-t", "main"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...feat?quick_pull=1\n")
+        .stderr("");
+}
+
+#[test]
+fn unpushed_commits_are_reported_but_do_not_fail() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let dir = repo.path();
+    git_in(dir, &["switch", "-q", "-c", "feat"]);
+    git_in(dir, &["update-ref", "refs/remotes/origin/feat", "HEAD"]);
+    git_in(dir, &["config", "branch.feat.remote", "origin"]);
+    git_in(dir, &["config", "branch.feat.merge", "refs/heads/feat"]);
+    git_in(dir, &["commit", "-q", "--allow-empty", "-m", "local only"]);
+    prj(dir)
+        .args(["open", "--print", "-t", "main"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...feat?quick_pull=1\n")
+        .stderr("warning: 1 local commit on 'feat' not pushed to 'origin' yet\n");
+}

@@ -7,8 +7,9 @@ use clap::{ArgAction, Args, CommandFactory, Parser, Subcommand};
 use crate::browser;
 use crate::error::Error;
 use crate::git::{Git, SystemGit, get_current_branch, get_default_branch, get_remote_url};
+use crate::head::resolve_head;
 use crate::provider::{Provider, resolve_provider};
-use crate::remote::parse_remote_url;
+use crate::remote::{RemoteInfo, parse_remote_url};
 
 // `args_override_self` and `infer_long_args` keep two argparse behaviours
 // that shell aliases rely on: a repeated option takes the last value, and a
@@ -123,9 +124,26 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
     let remote = parse_remote_url(&remote_url)?;
     let provider = resolve_provider(&remote, args.provider.as_deref())?;
 
+    let mut warnings = Vec::new();
+    let mut head_owner = None;
     let head = match non_empty(&args.source) {
         Some(source) => source.to_string(),
-        None => get_current_branch(git)?,
+        None => {
+            let local = get_current_branch(git)?;
+            let head = resolve_head(git, &local, &args.remote)?;
+            warnings.extend(head.warnings);
+            let fork_remote = head.remote.as_deref().filter(|r| *r != args.remote);
+            if let Some(owner) = fork_remote.and_then(|r| fork_owner(git, r, &remote)) {
+                match provider {
+                    Provider::GitHub => head_owner = Some(owner),
+                    Provider::Bitbucket => warnings.push(format!(
+                        "warning: '{}' is pushed to {owner}'s fork; choose that repository as the source on the Bitbucket page",
+                        head.branch
+                    )),
+                }
+            }
+            head.branch
+        }
     };
 
     let base = match provider {
@@ -136,7 +154,10 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
         Provider::Bitbucket => args.target.clone(),
     };
 
-    let url = provider.build_pr_url(&remote, base.as_deref(), &head)?;
+    let url = provider.build_pr_url_from(&remote, base.as_deref(), &head, head_owner.as_deref())?;
+    for warning in &warnings {
+        let _ = writeln!(io::stderr(), "{warning}");
+    }
 
     if args.print {
         print_line(&url)?;
@@ -148,6 +169,15 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
         return Ok(ExitCode::from(1));
     }
     Ok(ExitCode::SUCCESS)
+}
+
+/// The owner of `head_remote` when it is another fork of the same repository
+/// host as the target. Any problem reading it just means "not a fork".
+fn fork_owner(git: &dyn Git, head_remote: &str, target: &RemoteInfo) -> Option<String> {
+    let url = get_remote_url(git, head_remote).ok()?;
+    let head = parse_remote_url(&url).ok()?;
+    let same_host = head.authority().eq_ignore_ascii_case(&target.authority());
+    (same_host && !head.owner.eq_ignore_ascii_case(&target.owner)).then_some(head.owner)
 }
 
 /// Writes one line to stdout. A closed pipe (`prj open --print | true`) is
