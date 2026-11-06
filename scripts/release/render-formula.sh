@@ -64,6 +64,7 @@ class Prj < Formula
 
   def install
     bin.install "prj"
+    generate_completions_from_executable(bin/"prj", "completions")
   end
 
   test do

@@ -39,6 +39,12 @@ pub enum Command {
     /// Open a pull request page
     #[command(args_override_self = true, infer_long_args = true)]
     Open(OpenArgs),
+
+    /// Print a shell completion script (bash, zsh, fish, powershell, elvish)
+    Completions {
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
 }
 
 #[derive(Args, Debug, Clone, Default)]
@@ -98,6 +104,11 @@ pub fn main() -> ExitCode {
 
     let result = match command {
         Command::Open(args) => cmd_open(&args, &SystemGit),
+        Command::Completions { shell } => {
+            let mut out = Vec::new();
+            clap_complete::generate(shell, &mut Cli::command(), "prj", &mut out);
+            print_bytes(&out).map(|()| ExitCode::SUCCESS)
+        }
     };
     match result {
         Ok(code) => code,
@@ -210,15 +221,19 @@ fn fork_owner(
     (same_host && !head.owner.eq_ignore_ascii_case(&target.owner)).then_some(head.owner)
 }
 
-/// Writes one line to stdout. A closed pipe (`prj open --print | true`) is
-/// not an error; `println!` would panic there.
-fn print_line(line: &str) -> Result<(), Error> {
+fn print_bytes(bytes: &[u8]) -> Result<(), Error> {
     let mut stdout = io::stdout().lock();
-    match writeln!(stdout, "{line}").and_then(|()| stdout.flush()) {
+    match stdout.write_all(bytes).and_then(|()| stdout.flush()) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
         Err(e) => Err(Error::unexpected(format!("failed to write to stdout: {e}"))),
     }
+}
+
+/// Writes one line to stdout. A closed pipe (`prj open --print | true`) is
+/// not an error; `println!` would panic there.
+fn print_line(line: &str) -> Result<(), Error> {
+    print_bytes(format!("{line}\n").as_bytes())
 }
 
 #[cfg(test)]
@@ -229,7 +244,7 @@ mod tests {
         let cli = parse_args(std::iter::once("prj").chain(argv.iter().copied())).unwrap();
         match cli.command {
             Some(Command::Open(args)) => args,
-            None => panic!("no subcommand"),
+            other => panic!("expected open, got {other:?}"),
         }
     }
 
