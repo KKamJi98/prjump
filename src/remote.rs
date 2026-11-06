@@ -75,6 +75,7 @@ pub fn parse_remote_url(url: &str) -> Result<RemoteInfo, Error> {
     if host.is_empty() {
         return Err(Error::user("Could not parse host from remote URL."));
     }
+    let host = web_host(host);
 
     let mut path = path.trim_start_matches('/');
     if let Some(stripped) = path.strip_suffix(".git") {
@@ -96,6 +97,16 @@ pub fn parse_remote_url(url: &str) -> Result<RemoteInfo, Error> {
         scheme,
         port,
     })
+}
+
+/// Hosts that only serve SSH (GitHub and Bitbucket's port-443 endpoints)
+/// map to the host that serves the web pages.
+fn web_host(host: String) -> String {
+    match host.to_lowercase().as_str() {
+        "ssh.github.com" => "github.com".to_string(),
+        "altssh.bitbucket.org" => "bitbucket.org".to_string(),
+        _ => host,
+    }
 }
 
 #[derive(Debug)]
@@ -396,6 +407,21 @@ mod tests {
     fn path_is_not_normalised() {
         let r = parse_remote_url("https://github.com/org/../repo/x").unwrap();
         assert_eq!((r.owner.as_str(), r.repo.as_str()), ("org/../repo", "x"));
+    }
+
+    #[test]
+    fn ssh_only_hosts_map_to_their_web_host() {
+        for (url, host) in [
+            ("ssh://git@ssh.github.com:443/org/repo.git", "github.com"),
+            ("git@SSH.GitHub.com:org/repo.git", "github.com"),
+            ("git@altssh.bitbucket.org:team/repo.git", "bitbucket.org"),
+            (
+                "ssh://git@altssh.bitbucket.org:443/team/repo.git",
+                "bitbucket.org",
+            ),
+        ] {
+            assert_eq!(parse_remote_url(url).unwrap().host, host, "{url}");
+        }
     }
 
     #[test]
