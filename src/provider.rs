@@ -67,14 +67,22 @@ impl Provider {
     }
 }
 
+/// `host` is `domain` itself or a subdomain of it; `notgithub.com` is not.
+fn is_domain_or_subdomain(host: &str, domain: &str) -> bool {
+    host == domain
+        || host
+            .strip_suffix(domain)
+            .is_some_and(|prefix| prefix.ends_with('.'))
+}
+
 pub fn resolve_provider(remote: &RemoteInfo, override_: Option<&str>) -> Result<Provider, Error> {
     let key = match override_.filter(|o| !o.is_empty()) {
         Some(o) => o.to_lowercase(),
         None => {
             let host = remote.host.to_lowercase();
-            if host.ends_with("github.com") {
+            if is_domain_or_subdomain(&host, "github.com") {
                 "github".to_string()
-            } else if host.ends_with("bitbucket.org") {
+            } else if is_domain_or_subdomain(&host, "bitbucket.org") {
                 "bitbucket".to_string()
             } else {
                 return Err(Error::user(
@@ -132,6 +140,23 @@ mod tests {
     fn resolve_provider_subdomain_github_enterprise() {
         let r = RemoteInfo::new("github.mycompany.github.com", "org", "repo");
         assert_eq!(resolve_provider(&r, None).unwrap().name(), "github");
+    }
+
+    #[test]
+    fn lookalike_hosts_are_not_detected() {
+        for host in [
+            "notgithub.com",
+            "evilbitbucket.org",
+            "github.com.evil.example",
+        ] {
+            let r = RemoteInfo::new(host, "o", "r");
+            let err = resolve_provider(&r, None).unwrap_err();
+            assert!(err.message().contains("Unsupported host"), "{host}");
+        }
+        let r = RemoteInfo::new("GitHub.COM", "o", "r");
+        assert_eq!(resolve_provider(&r, None).unwrap(), Provider::GitHub);
+        let r = RemoteInfo::new("eu.bitbucket.org", "o", "r");
+        assert_eq!(resolve_provider(&r, None).unwrap(), Provider::Bitbucket);
     }
 
     #[test]

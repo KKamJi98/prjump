@@ -32,6 +32,12 @@
       "reason": "Phase 3 bug 4: IPv6 hosts lost their brackets, which made the URL invalid.",
       "stdout": "https://[fe80::1%25eth0]/o/r/compare/main...x\n"
     },
+    "url/notgithub": {
+      "reason": "Phase 3 bug 6: notgithub.com is not GitHub; only github.com and its subdomains are.",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported host. Use --provider github|bitbucket to override.\n"
+    },
     "url/ssh-github-port-443": {
       "reason": "Phase 3 bug 5: ssh.github.com only serves SSH; the web page is on github.com.",
       "stdout": "https://github.com/org/repo/compare/main...feature%2Fx\n"
