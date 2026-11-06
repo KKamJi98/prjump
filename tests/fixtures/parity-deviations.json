@@ -1,0 +1,5 @@
+{
+  "comment": "Intentional differences from prjump 0.2.2. Every entry needs a reason. See scripts/parity/README.md.",
+  "rules": [],
+  "cases": {}
+}
