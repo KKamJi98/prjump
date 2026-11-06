@@ -15,6 +15,18 @@
     "default/symbolic-ref-slash": {
       "reason": "Phase 3 bug 1: a default branch with a slash (release/2026) was cut to its last segment.",
       "stdout": "https://github.com/o/r/compare/release%2F2026...x\n"
+    },
+    "url/https-port": {
+      "reason": "Phase 3 bug 4: the web port of an https remote was dropped.",
+      "stdout": "https://github.com:8443/org/repo/compare/main...feature%2Fx\n"
+    },
+    "url/ipv6": {
+      "reason": "Phase 3 bug 4: IPv6 hosts lost their brackets and the web port, which made the URL invalid.",
+      "stdout": "https://[::1]:3000/org/repo/compare/main...x\n"
+    },
+    "url/ipv6-scoped": {
+      "reason": "Phase 3 bug 4: IPv6 hosts lost their brackets, which made the URL invalid.",
+      "stdout": "https://[fe80::1%25eth0]/o/r/compare/main...x\n"
     }
   }
 }
