@@ -43,7 +43,10 @@ fn prj(cwd: &Path) -> Command {
         .env("GIT_SSH_COMMAND", "false")
         // Keep the developer's own ~/.config/prjump out of the tests.
         .env_remove("PRJ_CONFIG")
-        .env("XDG_CONFIG_HOME", std::env::temp_dir().join("prj-tests-no-config"))
+        .env(
+            "XDG_CONFIG_HOME",
+            std::env::temp_dir().join("prj-tests-no-config"),
+        )
         .env_remove("SSH_CONNECTION")
         .env_remove("SSH_CLIENT")
         .env_remove("SSH_TTY");
@@ -311,4 +314,60 @@ fn missing_default_config_is_ignored() {
         .args(["open", "--print", "-t", "main", "-s", "x"])
         .assert()
         .success();
+}
+
+#[test]
+fn ssh_session_without_display_prints_instead_of_opening() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    prj(repo.path())
+        .env("SSH_CONNECTION", "10.0.0.1 50000 10.0.0.2 22")
+        .env_remove("DISPLAY")
+        .env_remove("WAYLAND_DISPLAY")
+        .env_remove("BROWSER")
+        .args(["open", "-t", "main", "-s", "x"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...x?quick_pull=1\n")
+        .stderr(predicate::str::starts_with(
+            "note: SSH session without a display",
+        ));
+}
+
+#[cfg(unix)]
+#[test]
+fn ssh_session_with_browser_set_still_opens() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let log = repo.path().join("browser.log");
+    let script = repo.path().join("browser.sh");
+    std::fs::write(
+        &script,
+        format!("#!/bin/sh\necho \"$1\" > '{}'\n", log.display()),
+    )
+    .unwrap();
+    StdCommand::new("chmod")
+        .args(["755"])
+        .arg(&script)
+        .status()
+        .unwrap();
+    prj(repo.path())
+        .env("SSH_CONNECTION", "10.0.0.1 50000 10.0.0.2 22")
+        .env("BROWSER", &script)
+        .args(["open", "-t", "main", "-s", "x"])
+        .assert()
+        .success()
+        .stdout("");
+    assert_eq!(
+        std::fs::read_to_string(&log).unwrap(),
+        "https://github.com/o/r/compare/main...x?quick_pull=1\n"
+    );
+}
+
+#[test]
+fn copy_never_breaks_print() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    prj(repo.path())
+        .args(["open", "--print", "--copy", "-t", "main", "-s", "x"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...x?quick_pull=1\n");
 }

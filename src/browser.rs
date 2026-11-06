@@ -12,6 +12,16 @@ const BROWSER_SEPARATOR: char = ';';
 #[cfg(not(windows))]
 const BROWSER_SEPARATOR: char = ':';
 
+/// An SSH login with no forwarded display and no `$BROWSER`: a browser
+/// would open on the remote machine, if anywhere, so prj prints the URL.
+pub fn headless_ssh_session() -> bool {
+    let set = |key: &str| std::env::var_os(key).is_some_and(|v| !v.is_empty());
+    (set("SSH_CONNECTION") || set("SSH_CLIENT") || set("SSH_TTY"))
+        && !set("DISPLAY")
+        && !set("WAYLAND_DISPLAY")
+        && !set("BROWSER")
+}
+
 /// Returns true when some browser accepted the URL.
 pub fn open(url: &str) -> bool {
     if let Some(browser_env) = std::env::var_os("BROWSER") {

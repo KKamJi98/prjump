@@ -5,6 +5,7 @@ use std::process::ExitCode;
 use clap::{ArgAction, Args, CommandFactory, Parser, Subcommand};
 
 use crate::browser;
+use crate::clipboard;
 use crate::config::Config;
 use crate::error::Error;
 use crate::git::{Git, SystemGit, get_current_branch, get_default_branch, get_remote_url};
@@ -62,6 +63,10 @@ pub struct OpenArgs {
     /// Print the URL instead of opening the browser
     #[arg(long)]
     pub print: bool,
+
+    /// Also copy the URL to the terminal's clipboard (OSC 52; works over SSH)
+    #[arg(long)]
+    pub copy: bool,
 }
 
 pub fn parse_args<I, T>(argv: I) -> Result<Cli, clap::Error>
@@ -163,8 +168,23 @@ pub fn cmd_open(args: &OpenArgs, git: &dyn Git) -> Result<ExitCode, Error> {
         let _ = writeln!(io::stderr(), "{warning}");
     }
 
+    if args.copy {
+        if let Err(why) = clipboard::copy(&url) {
+            let _ = writeln!(io::stderr(), "warning: --copy: {why}");
+        }
+    }
+
     if args.print {
         print_line(&url)?;
+        return Ok(ExitCode::SUCCESS);
+    }
+
+    if browser::headless_ssh_session() {
+        print_line(&url)?;
+        let _ = writeln!(
+            io::stderr(),
+            "note: SSH session without a display; printed the URL instead of opening a browser (--copy puts it on your local clipboard)"
+        );
         return Ok(ExitCode::SUCCESS);
     }
 
