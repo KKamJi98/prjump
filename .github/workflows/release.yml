@@ -44,6 +44,10 @@ jobs:
           crate="$(cargo metadata --no-deps --format-version 1 --locked \
             | jq -r '.packages[] | select(.name == "prjump") | .version')"
           tag="${REF_NAME#v}"
+          if [[ ! "${tag}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag ${REF_NAME} is not vX.Y.Z; pre-releases are not published" >&2
+            exit 1
+          fi
           if [[ "${crate}" != "${tag}" ]]; then
             echo "tag ${tag} does not match Cargo.toml version ${crate}" >&2
             exit 1
@@ -111,10 +115,12 @@ jobs:
           fi
           cd dist
           if command -v sha256sum >/dev/null; then
-            sha256sum "${archive}" > "${archive}.sha256"
+            sum="$(sha256sum "${archive}" | cut -d ' ' -f 1)"
           else
-            shasum -a 256 "${archive}" > "${archive}.sha256"
+            sum="$(shasum -a 256 "${archive}" | cut -d ' ' -f 1)"
           fi
+          # One format everywhere: Git Bash's sha256sum would write "*file".
+          printf '%s  %s\n' "${sum}" "${archive}" > "${archive}.sha256"
           cat "${archive}.sha256"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -207,6 +213,9 @@ jobs:
   homebrew:
     needs: [check, release]
     runs-on: ubuntu-latest
+    # Tag-only environment. Moving HOMEBREW_TAP_DEPLOY_KEY from a repository
+    # secret to a `release` environment secret limits it to this job.
+    environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
