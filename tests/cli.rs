@@ -179,3 +179,37 @@ fn detached_head_still_asks_for_source() {
         .code(1)
         .stderr("Error: Detached HEAD. Use --source to specify a branch.\n");
 }
+
+/// A remote whose ssh never answers must not hang prj: the remote lookup
+/// gives up after PRJ_GIT_TIMEOUT seconds and the local fallbacks decide.
+#[cfg(unix)]
+#[test]
+fn hanging_remote_lookup_times_out() {
+    use std::os::unix::fs::PermissionsExt;
+    use std::time::{Duration, Instant};
+
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    git_in(
+        repo.path(),
+        &["update-ref", "refs/remotes/origin/develop", "HEAD"],
+    );
+    let ssh = repo.path().join("hanging-ssh");
+    std::fs::write(&ssh, "#!/bin/sh\nexec sleep 30\n").unwrap();
+    std::fs::set_permissions(&ssh, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    let started = Instant::now();
+    prj(repo.path())
+        .env("GIT_SSH_COMMAND", &ssh)
+        .env("GIT_SSH_VARIANT", "simple")
+        .env("PRJ_GIT_TIMEOUT", "1")
+        .args(["open", "--print", "-s", "x"])
+        .timeout(Duration::from_secs(10))
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/develop...x\n");
+    assert!(
+        started.elapsed() < Duration::from_secs(8),
+        "{:?}",
+        started.elapsed()
+    );
+}
