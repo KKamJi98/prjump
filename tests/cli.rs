@@ -131,3 +131,51 @@ fn version_flag_prints_crate_version() {
         .success()
         .stdout(format!("prj {}\n", env!("CARGO_PKG_VERSION")));
 }
+
+fn git_in(dir: &Path, args: &[&str]) {
+    let status = StdCommand::new("git")
+        .args(["-c", "user.name=t", "-c", "user.email=t@example.com"])
+        .args(args)
+        .current_dir(dir)
+        .status()
+        .unwrap();
+    assert!(status.success(), "git {args:?}");
+}
+
+#[test]
+fn current_branch_ignores_a_tag_with_the_same_name() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    git_in(repo.path(), &["switch", "-q", "-c", "foo"]);
+    git_in(repo.path(), &["tag", "foo"]);
+    prj(repo.path())
+        .args(["open", "--print", "-t", "main"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...foo\n");
+}
+
+#[test]
+fn current_branch_works_before_the_first_commit() {
+    let dir = tempfile::tempdir().unwrap();
+    git_in(dir.path(), &["init", "-q", "-b", "fresh"]);
+    git_in(
+        dir.path(),
+        &["remote", "add", "origin", "git@github.com:o/r.git"],
+    );
+    prj(dir.path())
+        .args(["open", "--print", "-t", "main"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...fresh\n");
+}
+
+#[test]
+fn detached_head_still_asks_for_source() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    git_in(repo.path(), &["switch", "-q", "--detach"]);
+    prj(repo.path())
+        .args(["open", "--print", "-t", "main"])
+        .assert()
+        .code(1)
+        .stderr("Error: Detached HEAD. Use --source to specify a branch.\n");
+}
