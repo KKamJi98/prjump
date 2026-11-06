@@ -255,11 +255,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p Formula
           cp "${RUNNER_TEMP}/prj.rb" Formula/prj.rb
-          if [[ -z "$(git status --porcelain)" ]]; then
+          # --untracked-files=all: in a tap without Formula/ yet, plain
+          # --porcelain reports the new directory ("Formula/"), not the file.
+          if [[ -z "$(git status --porcelain --untracked-files=all)" ]]; then
             echo "Formula/prj.rb already up to date"
             exit 0
           fi
-          changed="$(git status --porcelain | awk '{print $2}')"
+          changed="$(git status --porcelain --untracked-files=all | awk '{print $2}')"
           if [[ "${changed}" != "Formula/prj.rb" ]]; then
             echo "refusing to commit unexpected changes: ${changed}" >&2
             exit 1
