@@ -16,6 +16,10 @@
       "reason": "Phase 3 bug 1: a default branch with a slash (release/2026) was cut to its last segment.",
       "stdout": "https://github.com/o/r/compare/release%2F2026...x\n"
     },
+    "url/altssh-bitbucket": {
+      "reason": "Phase 3 bug 5: altssh.bitbucket.org only serves SSH; the web page is on bitbucket.org.",
+      "stdout": "https://bitbucket.org/team/repo/pull-requests/new?source=feature%2Fx&dest=main&t=1\n"
+    },
     "url/https-port": {
       "reason": "Phase 3 bug 4: the web port of an https remote was dropped.",
       "stdout": "https://github.com:8443/org/repo/compare/main...feature%2Fx\n"
@@ -27,6 +31,10 @@
     "url/ipv6-scoped": {
       "reason": "Phase 3 bug 4: IPv6 hosts lost their brackets, which made the URL invalid.",
       "stdout": "https://[fe80::1%25eth0]/o/r/compare/main...x\n"
+    },
+    "url/ssh-github-port-443": {
+      "reason": "Phase 3 bug 5: ssh.github.com only serves SSH; the web page is on github.com.",
+      "stdout": "https://github.com/org/repo/compare/main...feature%2Fx\n"
     }
   }
 }
