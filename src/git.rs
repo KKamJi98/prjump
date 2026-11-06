@@ -93,8 +93,14 @@ pub fn get_default_branch(git: &dyn Git, remote: &str) -> Result<String, Error> 
     let head_ref = format!("refs/remotes/{remote}/HEAD");
     let result = git.run(&["symbolic-ref", &head_ref])?;
     if result.success {
+        // Strip the whole `refs/remotes/<remote>/` prefix: the branch name
+        // itself may contain slashes (release/2026).
         let full = pystr::strip(&result.stdout);
-        return Ok(full.rsplit('/').next().unwrap_or(full).to_string());
+        let prefix = format!("refs/remotes/{remote}/");
+        let branch = full
+            .strip_prefix(&prefix)
+            .unwrap_or_else(|| full.rsplit('/').next().unwrap_or(full));
+        return Ok(branch.to_string());
     }
 
     let result = git.run(&["remote", "show", remote])?;
@@ -161,6 +167,18 @@ mod tests {
     fn default_branch_symbolic_ref_returns_main() {
         let git = MockGit(|_| ok("refs/remotes/origin/main\n"));
         assert_eq!(get_default_branch(&git, "origin").unwrap(), "main");
+    }
+
+    #[test]
+    fn default_branch_keeps_slashes_in_branch_name() {
+        let git = MockGit(|_| ok("refs/remotes/origin/release/2026\n"));
+        assert_eq!(get_default_branch(&git, "origin").unwrap(), "release/2026");
+    }
+
+    #[test]
+    fn default_branch_handles_remote_names_with_slashes() {
+        let git = MockGit(|_| ok("refs/remotes/team/fork/main\n"));
+        assert_eq!(get_default_branch(&git, "team/fork").unwrap(), "main");
     }
 
     #[test]
