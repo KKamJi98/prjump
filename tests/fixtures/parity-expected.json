@@ -1,0 +1,670 @@
+{
+  "reference": "prjump==0.2.2",
+  "results": [
+    {
+      "name": "url/ssh-scp",
+      "exit": 0,
+      "stdout": "https://github.com/octocat/Hello-World/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/https",
+      "exit": 0,
+      "stdout": "https://github.com/octocat/Hello-World/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/http-unsupported-host",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported host. Use --provider github|bitbucket to override.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/http-provider-override",
+      "exit": 0,
+      "stdout": "http://github.example.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/git-protocol",
+      "exit": 0,
+      "stdout": "https://github.com/octocat/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/single-segment",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Remote URL does not look like a hosted git repository.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ssh-no-colon",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported remote URL format.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/bitbucket-ssh",
+      "exit": 0,
+      "stdout": "https://bitbucket.org/atlassian/stash/pull-requests/new?source=feature%2Fx&dest=main&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/bitbucket-https-no-target",
+      "exit": 0,
+      "stdout": "https://bitbucket.org/team/repo/pull-requests/new?source=feature%2Fx&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/https-port",
+      "exit": 0,
+      "stdout": "https://github.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ssh-github-port-443",
+      "exit": 0,
+      "stdout": "https://ssh.github.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/altssh-bitbucket",
+      "exit": 0,
+      "stdout": "https://altssh.bitbucket.org/team/repo/pull-requests/new?source=feature%2Fx&dest=main&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/scp-mixed-case-host",
+      "exit": 0,
+      "stdout": "https://GitHub.com/Org/Repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/https-mixed-case-host",
+      "exit": 0,
+      "stdout": "https://github.com/Org/Repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/https-credentials",
+      "exit": 0,
+      "stdout": "https://github.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipv6",
+      "exit": 0,
+      "stdout": "https://::1/org/repo/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipv6-unclosed",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Unexpected error: Invalid IPv6 URL\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipv6-invalid",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Unexpected error: 'abc' does not appear to be an IPv4 or IPv6 address\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipv4-in-brackets",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Unexpected error: An IPv4 address cannot be in brackets\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipv6-scoped",
+      "exit": 0,
+      "stdout": "https://fe80::1%25eth0/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ipvfuture",
+      "exit": 0,
+      "stdout": "https://v1.x/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ssh-alias-host",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported host. Use --provider github|bitbucket to override.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ssh-alias-host-override",
+      "exit": 0,
+      "stdout": "https://github-work/org/repo/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/dotdot-path",
+      "exit": 0,
+      "stdout": "https://github.com/org/../repo/x/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/percent-path",
+      "exit": 0,
+      "stdout": "https://github.com/org/my%20repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/notgithub",
+      "exit": 0,
+      "stdout": "https://notgithub.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/gitlab-subgroup",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported host. Use --provider github|bitbucket to override.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/gitlab-subgroup-override",
+      "exit": 0,
+      "stdout": "https://gitlab.com/group/sub/repo/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/trailing-slash",
+      "exit": 0,
+      "stdout": "https://github.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/query-fragment",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/https-params",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/ssh-params",
+      "exit": 0,
+      "stdout": "https://github.com/o/r.git;x/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/upper-scheme",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/file-scheme",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Could not parse host from remote URL.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/invalid-scheme",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Could not parse host from remote URL.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/host-only",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Remote URL does not look like a hosted git repository.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/scp-no-user",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/scp-empty-user",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "url/scp-empty-host",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Could not parse host from remote URL.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/local-path",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported remote URL format.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/unicode-host",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported host. Use --provider github|bitbucket to override.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "url/github-enterprise-subdomain",
+      "exit": 0,
+      "stdout": "https://github.mycompany.github.com/org/repo/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "branch/encoding",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/release%2F2026%20rc...a%20b%2Fc~d.e_f-g%2Bh%40i%26j%3Fk%23l%25m\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "branch/unicode",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...%EA%B8%B0%EB%8A%A5%2F%ED%95%9C%EA%B8%80\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "branch/bitbucket-encoding",
+      "exit": 0,
+      "stdout": "https://bitbucket.org/t/r/pull-requests/new?source=c%20d&dest=a%2Fb&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "current/main",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...main\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "current/slash-branch",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...feature%2Fx\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "current/detached",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Detached HEAD. Use --source to specify a branch.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "current/unborn",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Failed to detect current branch.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "current/ambiguous-tag",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...heads%2Ffoo\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "current/empty-source-flag",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...main\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/symbolic-ref-main",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/symbolic-ref-slash",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/2026...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/empty-target-flag",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/candidate-develop",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/develop...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/candidate-order",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/master...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/none",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unable to determine default branch. Use --target to specify one.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "default/remote-show",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/develop...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/remote-show-slash",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/release%2F2026...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "default/bitbucket-skips-lookup",
+      "exit": 0,
+      "stdout": "https://bitbucket.org/t/r/pull-requests/new?source=x&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "env/not-a-repo",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Failed to read remote URL for 'origin': fatal: not a git repository (or any of the parent directories): .git.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "env/no-such-remote",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Failed to read remote URL for 'upstream': error: No such remote 'upstream'.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "env/empty-remote-url",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unsupported remote URL format.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "env/upstream-remote",
+      "exit": 0,
+      "stdout": "https://github.com/up/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "browser/opens",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "browser_log": "https://github.com/o/r/compare/main...feature%2Fx\n"
+    },
+    {
+      "name": "browser/second-entry",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "browser_log": "https://github.com/o/r/compare/main...x\n"
+    },
+    {
+      "name": "args/no-command",
+      "exit": 1,
+      "stdout": "usage: prj [-h] [--version] {open} ...\n\nOpen GitHub/Bitbucket Cloud pull request pages.\n\npositional arguments:\n  {open}\n    open      Open a pull request page\n\noptions:\n  -h, --help  show this help message and exit\n  --version   show program's version number and exit\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/version",
+      "exit": 0,
+      "stdout": "prj {version}\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/version-prefix",
+      "exit": 0,
+      "stdout": "prj {version}\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/short-V",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: unrecognized arguments: -V\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/help",
+      "exit": 0,
+      "stdout": "usage: prj [-h] [--version] {open} ...\n\nOpen GitHub/Bitbucket Cloud pull request pages.\n\npositional arguments:\n  {open}\n    open      Open a pull request page\n\noptions:\n  -h, --help  show this help message and exit\n  --version   show program's version number and exit\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/help-prefix",
+      "exit": 0,
+      "stdout": "usage: prj [-h] [--version] {open} ...\n\nOpen GitHub/Bitbucket Cloud pull request pages.\n\npositional arguments:\n  {open}\n    open      Open a pull request page\n\noptions:\n  -h, --help  show this help message and exit\n  --version   show program's version number and exit\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/open-help",
+      "exit": 0,
+      "stdout": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\n\noptions:\n  -h, --help            show this help message and exit\n  --remote REMOTE       Git remote name\n  -t, --target TARGET   Target branch to merge into (GitHub base branch)\n  -s, --source SOURCE   Source branch to merge from (defaults to current\n                        branch)\n  --provider {bitbucket,github}\n                        Override provider detection\n  --print               Print the URL instead of opening the browser\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/open-help-long",
+      "exit": 0,
+      "stdout": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\n\noptions:\n  -h, --help            show this help message and exit\n  --remote REMOTE       Git remote name\n  -t, --target TARGET   Target branch to merge into (GitHub base branch)\n  -s, --source SOURCE   Source branch to merge from (defaults to current\n                        branch)\n  --provider {bitbucket,github}\n                        Override provider detection\n  --print               Print the URL instead of opening the browser\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/unknown-command",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: argument command: invalid choice: 'bogus' (choose from open)\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/open-version",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: unrecognized arguments: --version\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/print-before-command",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: unrecognized arguments: --print\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/extra-positional",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: unrecognized arguments: extra\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/double-dash",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj [-h] [--version] {open} ...\nprj: error: unrecognized arguments: -- -x\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/missing-value",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\nprj open: error: argument -t/--target: expected one argument\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/value-looks-like-flag",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\nprj open: error: argument -t/--target: expected one argument\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/negative-number-value",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/-1...y\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/provider-wrong-case",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\nprj open: error: argument --provider: invalid choice: 'GitHub' (choose from bitbucket, github)\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/provider-invalid",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\nprj open: error: argument --provider: invalid choice: 'gitlab' (choose from bitbucket, github)\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/ambiguous-prefix",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "usage: prj open [-h] [--remote REMOTE] [-t TARGET] [-s SOURCE]\n                [--provider {bitbucket,github}] [--print]\nprj open: error: ambiguous option: --p could match --provider, --print\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/prefixes",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/dev...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/provider-prefix",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/pull-requests/new?source=x&dest=m&t=1\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/remote-prefix",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/m...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/repeated-target",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/b...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/repeated-print",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/m...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/short-equals",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/short-attached",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/long-equals",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...x\n",
+      "stderr": "",
+      "browser_log": ""
+    },
+    {
+      "name": "args/long-equals-empty",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Error: Unable to determine default branch. Use --target to specify one.\n",
+      "browser_log": ""
+    },
+    {
+      "name": "args/option-after-print",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/m...x\n",
+      "stderr": "",
+      "browser_log": ""
+    }
+  ]
+}

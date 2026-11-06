@@ -1,0 +1,133 @@
+//! End-to-end checks of the `prj` binary against real git repositories.
+
+use std::path::Path;
+use std::process::Command as StdCommand;
+
+use assert_cmd::Command;
+use predicates::prelude::*;
+use tempfile::TempDir;
+
+/// A git repository with one commit on `main` and the given origin URL.
+fn repo_with_origin(url: &str) -> TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    for args in [
+        vec!["init", "-q", "-b", "main"],
+        vec![
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@example.com",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "init",
+        ],
+        vec!["remote", "add", "origin", url],
+    ] {
+        let status = StdCommand::new("git")
+            .args(&args)
+            .current_dir(dir.path())
+            .status()
+            .unwrap();
+        assert!(status.success(), "git {args:?}");
+    }
+    dir
+}
+
+fn prj(cwd: &Path) -> Command {
+    let mut cmd = Command::cargo_bin("prj").unwrap();
+    cmd.current_dir(cwd)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_SSH_COMMAND", "false")
+        .env_remove("SSH_CONNECTION")
+        .env_remove("SSH_CLIENT")
+        .env_remove("SSH_TTY");
+    cmd
+}
+
+#[test]
+fn prints_github_compare_url() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    prj(repo.path())
+        .args(["open", "--print", "-t", "main", "-s", "feature/x"])
+        .assert()
+        .success()
+        .stdout("https://github.com/o/r/compare/main...feature%2Fx\n")
+        .stderr("");
+}
+
+#[test]
+fn credentials_in_remote_url_never_reach_output() {
+    for url in [
+        "https://user:s3cr3t@github.com/o/r.git",
+        "https://user:s3cr3t@unsupported.example/o/r.git",
+        "https://user:s3cr3t@github.com/single-segment",
+        "https://user:s3cr3t@[::1/o/r",
+    ] {
+        let repo = repo_with_origin(url);
+        prj(repo.path())
+            .args(["open", "--print", "-t", "main", "-s", "x"])
+            .assert()
+            .stdout(predicate::str::contains("s3cr3t").not())
+            .stderr(predicate::str::contains("s3cr3t").not());
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn closed_stdout_pipe_is_not_an_error() {
+    let repo = repo_with_origin("git@github.com:o/r.git");
+    let prj = assert_cmd::cargo::cargo_bin("prj");
+    // `head -c0` exits without reading, so prj writes into a closed pipe.
+    let script = format!(
+        "'{}' open --print -t main -s x | head -c0; echo \"status=${{PIPESTATUS[0]}}\"",
+        prj.display()
+    );
+    let out = StdCommand::new("bash")
+        .args(["-c", &script])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stdout.contains("status=0"),
+        "stdout={stdout} stderr={stderr}"
+    );
+    assert!(!stderr.contains("panicked"), "stderr={stderr}");
+}
+
+#[test]
+fn missing_git_is_reported_clearly() {
+    let empty = tempfile::tempdir().unwrap();
+    prj(empty.path())
+        .env("PATH", empty.path())
+        .args(["open", "--print", "-t", "main", "-s", "x"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::starts_with(
+            "Error: git executable not found",
+        ));
+}
+
+#[test]
+fn no_subcommand_prints_help_to_stdout_and_exits_1() {
+    let dir = tempfile::tempdir().unwrap();
+    prj(dir.path())
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Usage: prj"))
+        .stderr("");
+}
+
+#[test]
+fn version_flag_prints_crate_version() {
+    let dir = tempfile::tempdir().unwrap();
+    prj(dir.path())
+        .arg("--version")
+        .assert()
+        .success()
+        .stdout(format!("prj {}\n", env!("CARGO_PKG_VERSION")));
+}

@@ -55,3 +55,38 @@ Decision: hand-written `.github/workflows/release.yml`.
   (`aside --account u0`). An earlier check on 2026-11-06 ran on the default
   (company) profile and does not say anything about the personal login.
 
+## Phase 1: parity port
+
+`tests/parity.rs` replays `tests/fixtures/parity-cases.json` against the Rust
+binary and compares exit status, stdout, stderr and the URL handed to the
+browser with what prjump 0.2.2 recorded (`parity-expected.json`, produced by
+`scripts/parity/generate.py`). At the end of Phase 1 all 95 cases matched
+with an empty deviations file.
+
+Choices made to get there:
+
+- **No `url` crate.** It rejects scp-style remotes, normalises `..`,
+  percent-encodes paths, keeps IPv6 brackets and keeps the case of `ssh://`
+  hosts. `src/remote.rs` ports CPython 3.13's `urlsplit`/`urlparse` instead,
+  including `;params`, IPv6/IPvFuture validation and the error texts that
+  surfaced as `Unexpected error: ...`.
+- **`quote(safe="")` set.** `percent_encoding::NON_ALPHANUMERIC` minus
+  `-._~`.
+- **argparse compatibility.** `args_override_self` (last value wins),
+  `infer_long_args` (`--tar`, `--pri`), `allow_negative_numbers` on the value
+  options (argparse takes `-t -1` as the value `-1`; the corpus caught this),
+  no `-V` short flag, and `prj` with no subcommand prints help to stdout and
+  exits 1.
+
+### Known differences from prjump 0.2.2
+
+| Situation | prjump 0.2.2 | prj 0.3.0 | Why |
+|---|---|---|---|
+| Help, usage and argument-error text | argparse wording | clap wording | Not a contract. Exit status (0 for help, 2 for errors) and the stream (stdout/stderr) are the same, which is what the corpus checks for these cases. |
+| stdout closed early (`prj open --print \| head -c0`) | `Exception ignored ... BrokenPipeError`, exit 120 | No output, exit 0 | Plan: a closed pipe is not an error. |
+| `git` not on PATH | `Unexpected error: [Errno 2] No such file or directory: 'git'` | `Error: git executable not found. Install git and make sure it is on PATH.` | Clearer message, same exit status 1. |
+| git prints non-UTF-8 bytes | `Unexpected error: 'utf-8' codec can't decode ...` | `Error: git <cmd> printed output that is not valid UTF-8.` | Same exit status 1. |
+| Non-UTF-8 command-line argument | Accepted (surrogateescape) | clap argument error, exit 2 | Branch names on the command line are UTF-8 in practice. |
+| `$BROWSER` names a browser Python knows (`firefox`, `chrome`, ...) | Python swaps in its own controller for that browser | Runs the entry as given with the URL | Same browser opens; flags may differ. |
+| Non-ASCII host that NFKC-normalises into `/?#@:` | `ValueError` from `_checknetloc` | Not checked | Needs a Unicode normalisation dependency for a case that cannot name a real host. |
+| Any panic | n/a | `Unexpected error: <msg>`, exit 1 | Matches Python's catch-all instead of Rust's exit 101. |
