@@ -30,8 +30,9 @@ pub fn open(url: &str) -> bool {
             return true;
         }
         // The entries failed; keep the crate from running them a second time.
-        // SAFETY: prj is single-threaded and nothing reads the environment
-        // concurrently at this point.
+        // SAFETY: no other thread reads or writes the environment. The only
+        // other threads prj starts are the pipe readers in `git::run_remote`,
+        // which may outlive a timed-out query but only read from a pipe.
         unsafe { std::env::remove_var("BROWSER") };
     }
     webbrowser::open(url).is_ok()

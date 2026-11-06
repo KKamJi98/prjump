@@ -123,3 +123,15 @@ dependency either way.
 | Completions | `prj completions <shell>` via `clap_complete`; the Homebrew formula installs bash, zsh and fish completions. |
 
 P2 and P3 ideas are in [ROADMAP.md](ROADMAP.md).
+
+### Known limitations (from the pre-merge review)
+
+- A push refspec such as `remote.origin.push = refs/heads/*:refs/heads/me/*`
+  is not followed; prj assumes the local name (or the upstream name with
+  `push.default=upstream`). `%(push:remoteref)` would give the exact name,
+  but it printed nothing in the setups checked on git 2.56.
+- A fork whose repository name differs from the upstream one would need a
+  head of the form `owner:repo:branch`. GitHub Docs only describe
+  `owner:branch`, so prj does not build the three-part form.
+- Ctrl-C while `git ls-remote` runs ends prj; git and ssh run in their own
+  process group and finish or time out on their own.

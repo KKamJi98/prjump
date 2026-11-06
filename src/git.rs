@@ -4,6 +4,7 @@
 
 use std::io::{self, Read};
 use std::process::{Child, Command, Output, Stdio};
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -31,12 +32,21 @@ pub trait Git {
 /// `PRJ_GIT_TIMEOUT` overrides the default.
 const DEFAULT_REMOTE_TIMEOUT_SECS: u64 = 10;
 
+/// Upper bound for `PRJ_GIT_TIMEOUT`, so the deadline arithmetic cannot
+/// overflow.
+const MAX_REMOTE_TIMEOUT_SECS: u64 = 3600;
+
 fn remote_timeout() -> Duration {
-    let secs = std::env::var("PRJ_GIT_TIMEOUT")
-        .ok()
+    parse_timeout(std::env::var("PRJ_GIT_TIMEOUT").ok().as_deref())
+}
+
+fn parse_timeout(value: Option<&str>) -> Duration {
+    let secs = value
         .and_then(|v| v.trim().parse::<u64>().ok())
         .filter(|&s| s > 0)
-        .unwrap_or(DEFAULT_REMOTE_TIMEOUT_SECS);
+        .map_or(DEFAULT_REMOTE_TIMEOUT_SECS, |s| {
+            s.min(MAX_REMOTE_TIMEOUT_SECS)
+        });
     Duration::from_secs(secs)
 }
 
@@ -70,7 +80,7 @@ fn stop(child: &mut Child) {
     #[cfg(unix)]
     {
         let _ = Command::new("kill")
-            .args(["-TERM", &format!("-{}", child.id())])
+            .args(["-KILL", &format!("-{}", child.id())])
             .stderr(Stdio::null())
             .status();
     }
@@ -106,15 +116,17 @@ impl Git for SystemGit {
 
         let mut stdout = child.stdout.take().expect("piped");
         let mut stderr = child.stderr.take().expect("piped");
-        let out_reader = thread::spawn(move || {
+        let (out_tx, out_rx) = mpsc::channel();
+        let (err_tx, err_rx) = mpsc::channel();
+        thread::spawn(move || {
             let mut buf = Vec::new();
             let _ = stdout.read_to_end(&mut buf);
-            buf
+            let _ = out_tx.send(buf);
         });
-        let err_reader = thread::spawn(move || {
+        thread::spawn(move || {
             let mut buf = Vec::new();
             let _ = stderr.read_to_end(&mut buf);
-            buf
+            let _ = err_tx.send(buf);
         });
 
         let deadline = Instant::now() + remote_timeout();
@@ -130,10 +142,14 @@ impl Git for SystemGit {
             }
             thread::sleep(Duration::from_millis(20));
         };
+        // git has exited, but a grandchild (an ssh ControlPersist master, a
+        // GIT_SSH wrapper) may keep the pipes open. Give the readers a
+        // moment, then take what they have.
+        let grace = Duration::from_millis(500);
         let output = Output {
             status,
-            stdout: out_reader.join().unwrap_or_default(),
-            stderr: err_reader.join().unwrap_or_default(),
+            stdout: out_rx.recv_timeout(grace).unwrap_or_default(),
+            stderr: err_rx.recv_timeout(grace).unwrap_or_default(),
         };
         decode(args, output).map(Some)
     }
@@ -319,6 +335,18 @@ mod tests {
             _ => fail(),
         });
         assert_eq!(get_default_branch(&git, "origin").unwrap(), "main");
+    }
+
+    #[test]
+    fn timeout_is_clamped_and_defaults_on_bad_input() {
+        assert_eq!(parse_timeout(None), Duration::from_secs(10));
+        assert_eq!(parse_timeout(Some("3")), Duration::from_secs(3));
+        assert_eq!(parse_timeout(Some("0")), Duration::from_secs(10));
+        assert_eq!(parse_timeout(Some("soon")), Duration::from_secs(10));
+        assert_eq!(
+            parse_timeout(Some("18446744073709551615")),
+            Duration::from_secs(3600)
+        );
     }
 
     #[test]

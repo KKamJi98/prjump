@@ -32,9 +32,13 @@ pub fn resolve_head(git: &dyn Git, local: &str, target_remote: &str) -> Result<H
     };
     let mut fields = line.split('\0').map(pystr::strip);
     let non_empty = |s: Option<&str>| s.filter(|v| !v.is_empty()).map(str::to_string);
-    let upstream_remote = non_empty(fields.next());
+    // Only configured remotes count: a branch that tracks a local branch
+    // reports "." and branch.<name>.remote may hold a URL.
+    let remotes = git.run(&["remote"])?;
+    let is_remote = |name: &String| remotes.stdout.lines().any(|r| pystr::strip(r) == name);
+    let upstream_remote = non_empty(fields.next()).filter(is_remote);
     let upstream_ref = non_empty(fields.next());
-    let push_remote = non_empty(fields.next());
+    let push_remote = non_empty(fields.next()).filter(is_remote);
 
     // %(push:remotename) already follows branch.<name>.pushRemote and
     // remote.pushDefault; it is empty when nothing is configured at all.
@@ -115,6 +119,7 @@ mod tests {
     fn pushed_and_up_to_date_has_no_warning() {
         let git = MockGit(|args| match args {
             ["for-each-ref", ..] => refs("origin", "refs/heads/feat", "origin"),
+            ["remote"] => ok("origin\n"),
             ["config", ..] => fail(),
             [
                 "rev-parse",
@@ -138,6 +143,7 @@ mod tests {
     fn unpushed_branch_warns() {
         let git = MockGit(|args| match args {
             ["for-each-ref", ..] => refs("upstream", "refs/heads/main", "origin"),
+            ["remote"] => ok("origin\nupstream\n"),
             _ => fail(),
         });
         let head = resolve_head(&git, "feat", "upstream").unwrap();
@@ -154,6 +160,7 @@ mod tests {
     fn local_commits_ahead_warn() {
         let git = MockGit(|args| match args {
             ["for-each-ref", ..] => refs("origin", "refs/heads/feat", ""),
+            ["remote"] => ok("origin\n"),
             ["rev-parse", ..] => ok("abc\n"),
             ["rev-list", ..] => ok("2\n"),
             _ => fail(),
@@ -169,6 +176,7 @@ mod tests {
     fn push_default_upstream_uses_the_upstream_branch_name() {
         let git = MockGit(|args| match args {
             ["for-each-ref", ..] => refs("origin", "refs/heads/remote-name", "origin"),
+            ["remote"] => ok("origin\n"),
             ["config", "--get", "push.default"] => ok("upstream\n"),
             [
                 "rev-parse",
@@ -188,11 +196,29 @@ mod tests {
     fn other_push_modes_keep_the_local_name() {
         let git = MockGit(|args| match args {
             ["for-each-ref", ..] => refs("origin", "refs/heads/main", "origin"),
+            ["remote"] => ok("origin\n"),
             ["config", "--get", "push.default"] => ok("simple\n"),
             ["rev-parse", ..] => ok("abc\n"),
             ["rev-list", ..] => ok("0\n"),
             _ => fail(),
         });
         assert_eq!(resolve_head(&git, "feat", "origin").unwrap().branch, "feat");
+    }
+
+    #[test]
+    fn local_tracking_branch_is_treated_as_unpushed() {
+        let git = MockGit(|args| match args {
+            ["for-each-ref", ..] => refs(".", "refs/heads/main", "."),
+            ["remote"] => ok("origin\n"),
+            ["config", "--get", "push.default"] => ok("upstream\n"),
+            _ => fail(),
+        });
+        let head = resolve_head(&git, "feat", "origin").unwrap();
+        assert_eq!(head.branch, "feat");
+        assert_eq!(head.remote, None);
+        assert_eq!(
+            head.warnings,
+            ["warning: branch 'feat' has no upstream; push it first: git push -u origin feat"]
+        );
     }
 }

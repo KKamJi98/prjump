@@ -20,3 +20,9 @@ Ideas that are not in prj 0.3.0. Nothing here is scheduled.
   installed, or the provider API).
 - **`prj` with no subcommand runs `open`.** Today it prints help and exits 1,
   as 0.2.x did. Changing that is a 1.0 decision.
+
+## Known gaps
+
+- Follow custom push refspecs when naming the head branch.
+- Cross-fork heads for forks with a different repository name
+  (`owner:repo:branch`), once confirmed against GitHub.
