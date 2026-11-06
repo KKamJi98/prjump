@@ -2,6 +2,16 @@
   "comment": "Intentional differences from prjump 0.2.2. Every entry needs a reason. See scripts/parity/README.md.",
   "rules": [],
   "cases": {
+    "current/ambiguous-tag": {
+      "reason": "Phase 3 bug 2: a tag with the branch's name made the source heads/foo.",
+      "stdout": "https://github.com/o/r/compare/main...foo\n"
+    },
+    "current/unborn": {
+      "reason": "Phase 3 bug 3: the current branch is known before the first commit.",
+      "exit": 0,
+      "stdout": "https://github.com/o/r/compare/main...main\n",
+      "stderr": ""
+    },
     "default/symbolic-ref-slash": {
       "reason": "Phase 3 bug 1: a default branch with a slash (release/2026) was cut to its last segment.",
       "stdout": "https://github.com/o/r/compare/release%2F2026...x\n"

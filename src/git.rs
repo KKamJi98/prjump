@@ -69,13 +69,17 @@ pub fn get_remote_url(git: &dyn Git, remote: &str) -> Result<String, Error> {
     Ok(url.to_string())
 }
 
+/// `git branch --show-current` (git 2.22+) prints the full branch name even
+/// when a tag shares it (`rev-parse --abbrev-ref` printed `heads/foo`) and
+/// before the first commit (where `rev-parse` failed). It prints nothing on
+/// a detached HEAD.
 pub fn get_current_branch(git: &dyn Git) -> Result<String, Error> {
-    let result = git.run(&["rev-parse", "--abbrev-ref", "HEAD"])?;
+    let result = git.run(&["branch", "--show-current"])?;
     if !result.success {
         return Err(Error::user("Failed to detect current branch."));
     }
     let branch = pystr::strip(&result.stdout);
-    if branch == "HEAD" {
+    if branch.is_empty() {
         return Err(Error::user(
             "Detached HEAD. Use --source to specify a branch.",
         ));
