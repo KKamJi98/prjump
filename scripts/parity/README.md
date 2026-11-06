@@ -8,6 +8,7 @@ Checks that the Rust `prj` behaves like prjump 0.2.2 (Python), case by case.
 | `scripts/parity/generate.py` | Runs prjump 0.2.2 from PyPI on every case and writes the expected results. |
 | `tests/fixtures/parity-expected.json` | Generated. Do not edit by hand. |
 | `tests/fixtures/parity-deviations.json` | Intentional differences, each with a reason. |
+| `scripts/parity/deviate.py` | Adds one entry to the deviations file. |
 | `tests/parity.rs` | Runs the Rust binary on every case and compares (`cargo test --test parity`, Unix only). |
 
 Regenerate after changing the cases (needs `uv` and network access to PyPI):
@@ -44,3 +45,10 @@ appends the URL to `{tmp}/browser.log` instead of opening anything.
   that touch many cases the same way.
 - `cases.<name>`: replaces `exit`, `stdout`, `stderr` or `browser_log` for one
   case. `skip_rules: true` keeps the rules away from that case.
+
+Add or replace a per-case entry with:
+
+```bash
+uv run --no-project python -I scripts/parity/deviate.py <case> "<reason>" \
+  [--exit N] [--stdout TEXT] [--stderr TEXT] [--browser-log TEXT] [--skip-rules]
+```
