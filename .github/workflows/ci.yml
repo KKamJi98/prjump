@@ -1,6 +1,7 @@
-# Lint and tests on every push and pull request. The matrix ends are the two
-# that can actually break: 3.9 is the floor requires-python promises, and 3.13
-# is what a fresh `uv tool install` picks today.
+# Format, lint and tests on every push to main and every pull request, on the
+# three operating systems prj ships for. The parity and pipe tests are Unix
+# only (they use shell scripts as the browser and as ssh); Windows still runs
+# the unit tests and the end-to-end tests that do not need a shell.
 name: ci
 
 on:
@@ -14,28 +15,47 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   test:
-    name: python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.13"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          python-version: ${{ matrix.python-version }}
+          persist-credentials: false
 
-      - run: uv run --extra dev ruff check .
-      - run: uv run --extra dev ruff format --check .
-      - run: uv run --extra dev pytest -q
+      # The runner images ship rustup; no third-party toolchain action needed.
+      - name: install stable toolchain
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy && rustup default stable
 
-      # The tests exercise the module; this catches the packaging metadata that
-      # they never touch, which is where a rename goes wrong.
-      - name: console script resolves
-        run: |
-          uv tool install .
-          prj --help >/dev/null
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+
+  deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check advisories bans licenses sources
+
+  # Publishing problems show up here instead of on release day.
+  package:
+    name: cargo package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo publish --dry-run --locked
