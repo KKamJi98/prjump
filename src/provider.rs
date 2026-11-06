@@ -50,7 +50,7 @@ impl Provider {
                     ));
                 };
                 Ok(format!(
-                    "{prefix}/compare/{}...{}",
+                    "{prefix}/compare/{}...{}?quick_pull=1",
                     quote(base),
                     quote(head)
                 ))
@@ -166,7 +166,7 @@ mod tests {
             Provider::GitHub
                 .build_pr_url(&r, Some("main"), "feature/x y")
                 .unwrap(),
-            "https://github.com/o/r/compare/main...feature%2Fx%20y"
+            "https://github.com/o/r/compare/main...feature%2Fx%20y?quick_pull=1"
         );
         assert!(Provider::GitHub.build_pr_url(&r, Some(""), "x").is_err());
     }
@@ -193,7 +193,7 @@ mod tests {
             Provider::GitHub
                 .build_pr_url(&r, Some("main"), "x")
                 .unwrap(),
-            "https://github.com:8443/o/r/compare/main...x"
+            "https://github.com:8443/o/r/compare/main...x?quick_pull=1"
         );
     }
 
@@ -208,7 +208,7 @@ mod tests {
                 Provider::GitHub
                     .build_pr_url(&r, Some("main"), "x")
                     .unwrap(),
-                "https://github.com/o/r/compare/main...x",
+                "https://github.com/o/r/compare/main...x?quick_pull=1",
                 "{url}"
             );
         }
@@ -221,7 +221,7 @@ mod tests {
             Provider::GitHub
                 .build_pr_url(&r, Some("main"), "x")
                 .unwrap(),
-            "https://[::1]:3000/o/r/compare/main...x"
+            "https://[::1]:3000/o/r/compare/main...x?quick_pull=1"
         );
     }
 }
