@@ -44,7 +44,8 @@ appends the URL to `{tmp}/browser.log` instead of opening anything.
   expected stdout or browser-log line that contains the marker. For changes
   that touch many cases the same way.
 - `cases.<name>`: replaces `exit`, `stdout`, `stderr` or `browser_log` for one
-  case. `skip_rules: true` keeps the rules away from that case.
+  case. Rules apply after the override; `skip_rules: true` keeps them away
+  from that case.
 
 Add or replace a per-case entry with:
 

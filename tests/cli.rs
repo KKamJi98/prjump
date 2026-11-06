@@ -54,7 +54,7 @@ fn prints_github_compare_url() {
         .args(["open", "--print", "-t", "main", "-s", "feature/x"])
         .assert()
         .success()
-        .stdout("https://github.com/o/r/compare/main...feature%2Fx\n")
+        .stdout("https://github.com/o/r/compare/main...feature%2Fx?quick_pull=1\n")
         .stderr("");
 }
 
@@ -151,7 +151,7 @@ fn current_branch_ignores_a_tag_with_the_same_name() {
         .args(["open", "--print", "-t", "main"])
         .assert()
         .success()
-        .stdout("https://github.com/o/r/compare/main...foo\n");
+        .stdout("https://github.com/o/r/compare/main...foo?quick_pull=1\n");
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn current_branch_works_before_the_first_commit() {
         .args(["open", "--print", "-t", "main"])
         .assert()
         .success()
-        .stdout("https://github.com/o/r/compare/main...fresh\n");
+        .stdout("https://github.com/o/r/compare/main...fresh?quick_pull=1\n");
 }
 
 #[test]
@@ -206,7 +206,7 @@ fn hanging_remote_lookup_times_out() {
         .timeout(Duration::from_secs(10))
         .assert()
         .success()
-        .stdout("https://github.com/o/r/compare/develop...x\n");
+        .stdout("https://github.com/o/r/compare/develop...x?quick_pull=1\n");
     assert!(
         started.elapsed() < Duration::from_secs(8),
         "{:?}",

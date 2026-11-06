@@ -248,13 +248,11 @@ fn apply_rules(text: &str, rules: &[Rule]) -> String {
         .collect()
 }
 
+/// Per-case overrides first, then the rules, so a rule such as "GitHub URLs
+/// gain a query parameter" also covers cases whose URL an override changed.
 fn expected_for(base: &Outcome, devs: &Deviations) -> Outcome {
     let mut exp = base.clone();
     let ov = devs.cases.get(&base.name);
-    if !ov.is_some_and(|o| o.skip_rules) {
-        exp.stdout = apply_rules(&exp.stdout, &devs.rules);
-        exp.browser_log = apply_rules(&exp.browser_log, &devs.rules);
-    }
     if let Some(ov) = ov {
         if let Some(v) = ov.exit {
             exp.exit = v;
@@ -268,6 +266,10 @@ fn expected_for(base: &Outcome, devs: &Deviations) -> Outcome {
         if let Some(v) = &ov.browser_log {
             exp.browser_log = v.clone();
         }
+    }
+    if !ov.is_some_and(|o| o.skip_rules) {
+        exp.stdout = apply_rules(&exp.stdout, &devs.rules);
+        exp.browser_log = apply_rules(&exp.browser_log, &devs.rules);
     }
     exp
 }
