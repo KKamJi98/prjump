@@ -40,8 +40,8 @@ uv tool uninstall prjump
 ```
 
 The commands and flags are the same. See
-[docs/rust-migration.md](docs/rust-migration.md) for the few edge cases that
-changed.
+[docs/rust-migration.md](docs/rust-migration.md) for the fixes and the few
+edge cases that behave differently.
 
 ## Usage
 
@@ -63,13 +63,62 @@ prj open --provider bitbucket
 
 # Print URL without opening the browser
 prj open --print
+
+# Also copy the URL to your terminal's clipboard (works over SSH)
+prj open --copy
 ```
 
-Notes:
-- Run inside a git repository with the target remote configured.
-- For Bitbucket Cloud, `--target` adds a `dest` query parameter as a best-effort
-  preselection. If the UI ignores it, choose the destination branch manually.
-- `$BROWSER` is honoured on every platform, like Python's `webbrowser` did.
+What `prj open` works out for you:
+
+- **Source branch.** Without `--source`, prj uses the branch you are on and
+  the name and remote `git push` would use for it. It warns (and carries on)
+  when the branch has no upstream, is not on the remote yet, or has local
+  commits the remote does not have.
+- **Forks.** When the branch is pushed to your fork (say `origin`) and the PR
+  goes to another remote (`--remote upstream`), the GitHub page compares
+  across forks (`main...you:branch`).
+- **GitHub.** The page opens straight on the "Open a pull request" form
+  (`?quick_pull=1`).
+- **Target branch.** Without `--target`, GitHub PRs use the remote's default
+  branch: `refs/remotes/<remote>/HEAD`, then `git ls-remote` (given up after
+  `PRJ_GIT_TIMEOUT` seconds, default 10), then the first of `main`, `master`,
+  `develop`, `trunk` that exists.
+- **Bitbucket Cloud.** `--target` adds a `dest` query parameter as a
+  best-effort preselection. If the UI ignores it, choose the destination
+  branch manually.
+- **Browser.** `$BROWSER` is honoured on every platform. In an SSH session
+  without a forwarded display (and no `$BROWSER`), prj prints the URL
+  instead of opening a browser on the remote machine.
+
+### Host aliases and self-hosted servers
+
+prj recognises `github.com`, `bitbucket.org` and their subdomains. For an
+`~/.ssh/config` alias or a server with another name, add it to
+`~/.config/prjump/config.toml` (or `$XDG_CONFIG_HOME/prjump/config.toml`, or
+the file named by `$PRJ_CONFIG`):
+
+```toml
+# git@github-work:org/repo.git, where github-work is an ~/.ssh/config alias
+[hosts."github-work"]
+web_host = "github.com"
+
+# A GitHub Enterprise server whose name says nothing about GitHub
+[hosts."git.corp.example"]
+provider = "github"
+web_host = "git.corp.example:8443"   # optional, host[:port]
+```
+
+`--provider` still wins over the file.
+
+### Shell completions
+
+Homebrew installs them. Otherwise:
+
+```bash
+prj completions bash > ~/.local/share/bash-completion/completions/prj
+prj completions zsh  > "${fpath[1]}/_prj"
+prj completions fish > ~/.config/fish/completions/prj.fish
+```
 
 ## Development
 

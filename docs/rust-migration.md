@@ -110,3 +110,16 @@ whose expected result changed are listed with the reason in
 The `HEAD branch:` line of `git remote show` being translated was not
 confirmed (only other lines were seen translated); the fix removes the
 dependency either way.
+
+## Phase 4: P1 features
+
+| Feature | Notes |
+|---|---|
+| Open the PR form directly | Planned as `?expand=1`. GitHub Docs ("Using query parameters to create a pull request", fpt/ghes/ghec) document `quick_pull=1` for this and do not mention `expand=1`, so prj uses `quick_pull=1`. Parity: one rule appends it to every compare URL. |
+| Source from the push target | `git for-each-ref --format=%(upstream:remotename)%00%(upstream:remoteref)%00%(push:remotename)`. On git 2.56 `%(push:remoteref)` and `%(push)` stayed empty in triangular setups (checked 2026-11-06), so the branch name comes from `push.default` instead (`upstream`/`tracking` push under the upstream name, every other mode under the local name). Warnings: no upstream, not on the remote yet, N local commits not pushed. Parity: the five cases without `--source` gain the "no upstream" warning on stderr. |
+| Forks | When the push remote differs from `--remote`, is on the same host and has another owner, the GitHub head is `owner:branch` (GitHub Docs, "Comparing across forks"). Bitbucket's create URL has no field for it, so prj warns instead. |
+| Host aliases | `config.toml` `[hosts."<host>"]` with `web_host` and `provider`. Adds `serde` and `toml` as dependencies. |
+| SSH sessions, `--copy` | `SSH_CONNECTION`/`SSH_CLIENT`/`SSH_TTY` set, no `DISPLAY`/`WAYLAND_DISPLAY`, no `$BROWSER`: print instead of open. `--copy` writes OSC 52 to `/dev/tty` (stderr on Windows), wrapped for tmux passthrough. Whether a terminal accepts OSC 52 is up to the terminal; failures are warnings. |
+| Completions | `prj completions <shell>` via `clap_complete`; the Homebrew formula installs bash, zsh and fish completions. |
+
+P2 and P3 ideas are in [ROADMAP.md](ROADMAP.md).
