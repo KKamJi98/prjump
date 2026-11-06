@@ -90,3 +90,23 @@ Choices made to get there:
 | `$BROWSER` names a browser Python knows (`firefox`, `chrome`, ...) | Python swaps in its own controller for that browser | Runs the entry as given with the URL | Same browser opens; flags may differ. |
 | Non-ASCII host that NFKC-normalises into `/?#@:` | `ValueError` from `_checknetloc` | Not checked | Needs a Unicode normalisation dependency for a case that cannot name a real host. |
 | Any panic | n/a | `Unexpected error: <msg>`, exit 1 | Matches Python's catch-all instead of Rust's exit 101. |
+
+## Phase 3: bug fixes
+
+Each fix is its own commit with a test that failed before it. Parity cases
+whose expected result changed are listed with the reason in
+`tests/fixtures/parity-deviations.json`.
+
+| # | Was | Now | Parity cases |
+|---|---|---|---|
+| 1 | Default branch `release/2026` became `2026` | `refs/remotes/<remote>/` prefix stripped, slashes kept | `default/symbolic-ref-slash` |
+| 2 | Branch `foo` with a tag `foo` became `heads/foo` | `git branch --show-current` | `current/ambiguous-tag` |
+| 3 | No commit yet: "Failed to detect current branch." | Same command knows the branch | `current/unborn` |
+| 4 | `https://host:8443/...` lost the port; IPv6 hosts lost their brackets | Port kept for http(s) remotes unless it is the default; ssh ports dropped; `[...]` around IPv6 | `url/https-port`, `url/ipv6`, `url/ipv6-scoped` |
+| 5 | `ssh.github.com`, `altssh.bitbucket.org` used as web hosts | Mapped to `github.com`, `bitbucket.org` | `url/ssh-github-port-443`, `url/altssh-bitbucket` |
+| 6 | `notgithub.com` detected as GitHub | Exact domain or subdomain only | `url/notgithub` |
+| 7 | `git remote show`: locale-dependent text, no time limit | `git ls-remote --symref <remote> HEAD`, `GIT_TERMINAL_PROMPT=0`, own process group, stopped after `PRJ_GIT_TIMEOUT` seconds (default 10) | none (same answers through the fake ssh) |
+
+The `HEAD branch:` line of `git remote show` being translated was not
+confirmed (only other lines were seen translated); the fix removes the
+dependency either way.
