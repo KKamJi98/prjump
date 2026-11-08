@@ -3,7 +3,7 @@
   <desc id="desc">prj reads Git metadata and optional config.toml host mappings. It resolves GitHub or Bitbucket Cloud, builds a URL, and opens it in a browser or prints it. Optional OSC 52 copies the URL to the terminal clipboard. It does not push or create pull requests.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><polygon points="0,0 10,5 0,10" fill="#52637b"/></marker>
-    <style>text{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;fill:#18283e;font-size:18px}.title{font-size:29px;font-weight:700}.head{font-size:22px;font-weight:700}.small,.label{font-size:17px;fill:#485a70}.edge{fill:none;stroke:#52637b;stroke-width:2;marker-end:url(#arrow)}</style>
+    <style>text{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;fill:#18283e;font-size:18px}.title{font-size:29px;font-weight:700}.head{font-size:22px;font-weight:700}.small,.label{font-size:17px;fill:#485a70}.edge,.trunk{fill:none;stroke:#52637b;stroke-width:2}</style>
   </defs>
   <rect width="1040" height="900" fill="#fff"/>
   <text x="30" y="44" class="title">Your branch. The right pull request page.</text>
@@ -20,22 +20,21 @@
   <text x="322" y="399">GitHub / GitHub Enterprise</text>
   <text x="322" y="429">Bitbucket Cloud</text>
   <text x="322" y="459" class="small">--provider overrides detection</text>
-  <line x1="520" y1="260" x2="520" y2="330" class="edge"/>
+  <line x1="520" y1="260" x2="520" y2="330" class="edge" marker-end="url(#arrow)"/>
   <text x="532" y="301" class="label">Inputs</text>
 
-  <line x1="520" y1="480" x2="520" y2="550" class="edge"/>
+  <line x1="520" y1="480" x2="520" y2="550" class="edge" marker-end="url(#arrow)"/>
   <text x="532" y="521" class="label">Provider + branch refs</text>
   <rect x="30" y="550" width="980" height="110" rx="12" fill="#ecf9f4" stroke="#7cbfa6"/>
   <text x="52" y="585" class="head">Build the URL</text>
   <text x="52" y="617">Encode source + target branch names</text>
   <text x="52" y="645" class="small">Compare / new pull request page</text>
 
-  <line x1="180" y1="660" x2="180" y2="740" class="edge"/>
-  <line x1="520" y1="660" x2="520" y2="740" class="edge"/>
-  <line x1="860" y1="660" x2="860" y2="740" class="edge"/>
-  <text x="192" y="706" class="label">URL</text>
-  <text x="532" y="706" class="label">URL</text>
-  <text x="872" y="706" class="label">URL</text>
+  <path d="M520 660 V700 M180 700 H860" class="trunk"/>
+  <line x1="180" y1="700" x2="180" y2="740" class="edge" marker-end="url(#arrow)"/>
+  <line x1="520" y1="700" x2="520" y2="740" class="edge" marker-end="url(#arrow)"/>
+  <line x1="860" y1="700" x2="860" y2="740" class="edge" marker-end="url(#arrow)"/>
+  <text x="532" y="686" class="label">URL</text>
 
   <rect x="30" y="740" width="300" height="100" rx="12" fill="#fff" stroke="#c7d1df"/>
   <text x="50" y="774" class="head">Browser</text>
